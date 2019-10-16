@@ -4,9 +4,9 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/xemoe/batteries/pkg/file"
+	"github.com/xemoe/batteries/pkg/matcher"
 	"io"
 	"os"
-	"regexp"
 	"sync"
 )
 
@@ -79,26 +79,22 @@ func Worker(filename file.File, wg *sync.WaitGroup, ch chan<- Metrics, counter f
 // Counter by matcher
 // And increase metric counter
 func Counter(line []byte, result *Metrics) {
-	NumericMatcher(line, result, regexp.MustCompile(`^\d+$`))
-	AlphabetMatcher(line, result, regexp.MustCompile(`^[a-zA-Z]+$`))
-	MixedMatcher(line, result, regexp.MustCompile(`^(\[a-zA-Z]+\d|\d+[a-zA-Z])`))
-}
-
-func NumericMatcher(line []byte, m *Metrics, matcher *regexp.Regexp) {
-	if matcher.Match(line) {
-		(*m).CountNumeric += 1
+	for _, m := range registeredMatchers(result) {
+		m.Count(line)
 	}
 }
 
-func AlphabetMatcher(line []byte, m *Metrics, matcher *regexp.Regexp) {
-	if matcher.Match(line) {
-		(*m).CountAlpha += 1
-	}
-}
-
-func MixedMatcher(line []byte, m *Metrics, matcher *regexp.Regexp) {
-	if matcher.Match(line) {
-		(*m).CountMixed += 1
+func registeredMatchers(result *Metrics) []matcher.Matcher {
+	return []matcher.Matcher{
+		matcher.NumericMatcher(func() {
+			(*result).CountNumeric += 1
+		}),
+		matcher.AlphaMatcher(func() {
+			(*result).CountAlpha += 1
+		}),
+		matcher.MixedMatcher(func() {
+			(*result).CountMixed += 1
+		}),
 	}
 }
 
