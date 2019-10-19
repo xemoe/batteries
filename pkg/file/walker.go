@@ -10,7 +10,7 @@ import (
 
 type File string
 
-type ShowMeTheFiles interface {
+type Walker interface {
 	List() []File
 }
 
@@ -18,7 +18,7 @@ type FileWalker struct {
 	BaseDir  string
 	FileExt  string
 	MaxDepth int
-	ShowMeTheFiles
+	Walker
 }
 
 func (f FileWalker) List() []File {
